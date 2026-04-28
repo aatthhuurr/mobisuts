@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="200dp"
+    android:background="@color/primary_dark"
+    android:gravity="bottom"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:theme="@style/ThemeOverlay.AppCompat.Dark">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/img_logo_header"
+        android:layout_width="75dp"
+        android:layout_height="75dp"
+        android:padding="2dp"
+        android:src="@drawable/logo_aplikasi"
+        app:strokeColor="@color/white"
+        app:strokeWidth="2dp"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.CornerSize50Percent" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="12dp"
+        android:text="UTS Aplikasi Mobile Bisnis"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Kelompok TI4AR | 2411500025"
+        android:textColor="#D1D1D1"
+        android:textSize="14sp"
+        android:fontFamily="sans-serif-light" />
+
+</LinearLayout>
