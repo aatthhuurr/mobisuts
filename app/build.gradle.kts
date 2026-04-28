@@ -4,11 +4,7 @@ plugins {
 
 android {
     namespace = "com.atmaluhur.mobisuts_2411500025"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.atmaluhur.mobisuts_2411500025"
