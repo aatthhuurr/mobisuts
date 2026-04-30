@@ -18,10 +18,20 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.atmaluhur.mobisuts_2411500025.api.RetrofitClient;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.io.InputStream;
 import java.util.Calendar;
+
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class PendaftaranFragment extends Fragment {
 
@@ -36,14 +46,18 @@ public class PendaftaranFragment extends Fragment {
                 if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
                     imageUri = result.getData().getData();
                     if (imgFoto != null && imageUri != null) {
+
                         imgFoto.setPadding(0, 0, 0, 0);
+
+                        imgFoto.setImageTintList(null);
+
                         imgFoto.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
                         imgFoto.setImageURI(imageUri);
                     }
                 }
             }
     );
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -65,18 +79,80 @@ public class PendaftaranFragment extends Fragment {
         btnUpload = view.findViewById(R.id.btn_upload);
         imgFoto = view.findViewById(R.id.img_foto);
 
-        // Date Picker untuk Tanggal Lahir
         if (etTanggalLahir != null) {
             etTanggalLahir.setOnClickListener(v -> showDatePicker());
         }
 
         if (btnDaftar != null) {
             btnDaftar.setOnClickListener(v -> {
-                if (etNama != null && etNama.getText().toString().isEmpty()) {
-                    etNama.setError("Nama tidak boleh kosong");
-                } else {
-                    Toast.makeText(getContext(), "Pendaftaran Berhasil", Toast.LENGTH_SHORT).show();
+                String nama = etNama.getText().toString().trim();
+                String tempat = etTempatLahir.getText().toString().trim();
+                String tanggal = etTanggalLahir.getText().toString().trim();
+                String wa = etWa.getText().toString().trim();
+                String sekolah = etAsalSekolah.getText().toString().trim();
+                String alamat = etAlamat.getText().toString().trim();
+
+                if (nama.isEmpty() || tempat.isEmpty() || tanggal.isEmpty() ||
+                        wa.isEmpty() || sekolah.isEmpty() || alamat.isEmpty()) {
+
+                    Toast.makeText(getContext(), "Semua data wajib diisi!", Toast.LENGTH_SHORT).show();
+
+                    if (nama.isEmpty()) etNama.setError("Nama wajib diisi");
+                    if (tempat.isEmpty()) etTempatLahir.setError("Tempat lahir wajib diisi");
+                    if (tanggal.isEmpty()) etTanggalLahir.setError("Tanggal lahir wajib diisi");
+                    if (wa.isEmpty()) etWa.setError("Nomor WA wajib diisi");
+                    if (sekolah.isEmpty()) etAsalSekolah.setError("Asal sekolah wajib diisi");
+                    if (alamat.isEmpty()) etAlamat.setError("Alamat wajib diisi");
+
+                    return;
                 }
+
+                if (imageUri == null) {
+                    Toast.makeText(getContext(), "Foto profil wajib diunggah!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                MultipartBody.Part partFoto = prepareFilePart("foto", imageUri);
+
+                RetrofitClient.getInstance().daftarSiswa(
+                        partFoto,
+                        createPartFromString(nama),
+                        createPartFromString(tempat),
+                        createPartFromString(tanggal),
+                        createPartFromString(wa),
+                        createPartFromString(sekolah),
+                        createPartFromString(alamat)
+                ).enqueue(new Callback<ResponseBody>() {
+                    @Override
+                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                        if (response.isSuccessful()) {
+                            Toast.makeText(requireContext(), "Pendaftaran Berhasil!", Toast.LENGTH_SHORT).show();
+
+                            new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                                    .setTitle("Berhasil")
+                                    .setMessage("Data pendaftaran Anda telah tersimpan!")
+                                    .setPositiveButton("Okeh", (dialog, which) -> {
+                                        etNama.setText("");
+                                        etTempatLahir.setText("");
+                                        etTanggalLahir.setText("");
+                                        etWa.setText("");
+                                        etAsalSekolah.setText("");
+                                        etAlamat.setText("");
+                                        imgFoto.setImageResource(R.drawable.ic_pendaftaran);
+                                        imgFoto.setPadding(40, 40, 40, 40);
+                                        imageUri = null;
+                                    })
+                                    .show();
+                        } else {
+                            Toast.makeText(requireContext(), "Gagal: " + response.code(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ResponseBody> call, Throwable t) {
+                        Toast.makeText(requireContext(), "Kesalahan Koneksi: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                });
             });
         }
 
@@ -96,9 +172,30 @@ public class PendaftaranFragment extends Fragment {
 
         DatePickerDialog datePickerDialog = new DatePickerDialog(requireContext(),
                 (view, yearSelected, monthOfYear, dayOfMonth) -> {
-                    String selectedDate = dayOfMonth + "/" + (monthOfYear + 1) + "/" + yearSelected;
+                    String selectedDate = yearSelected + "-" + (monthOfYear + 1) + "-" + dayOfMonth;
                     etTanggalLahir.setText(selectedDate);
                 }, year, month, day);
         datePickerDialog.show();
+    }
+
+    private RequestBody createPartFromString(String stringData) {
+        return RequestBody.create(MultipartBody.FORM, stringData);
+    }
+
+    private MultipartBody.Part prepareFilePart(String partName, Uri fileUri) {
+        try {
+            InputStream inputStream = requireContext().getContentResolver().openInputStream(fileUri);
+            byte[] bytes = new byte[inputStream.available()];
+            inputStream.read(bytes);
+
+            RequestBody requestFile = RequestBody.create(
+                    MediaType.parse(requireContext().getContentResolver().getType(fileUri)),
+                    bytes
+            );
+
+            return MultipartBody.Part.createFormData(partName, "foto.jpg", requestFile);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

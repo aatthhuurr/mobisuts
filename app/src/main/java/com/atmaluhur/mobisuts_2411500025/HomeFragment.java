@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -12,14 +13,21 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.atmaluhur.mobisuts_2411500025.api.RetrofitClient;
+import com.atmaluhur.mobisuts_2411500025.model.PengumumanResponse;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class HomeFragment extends Fragment {
 
     private RecyclerView rvPengumuman;
     private PengumumanAdapter adapter;
-    private List<Pengumuman> listPengumuman;
+    private List<PengumumanResponse> listPengumuman = new ArrayList<>();
     private SwipeRefreshLayout swipeRefresh;
 
     @Nullable
@@ -35,60 +43,38 @@ public class HomeFragment extends Fragment {
         rvPengumuman = view.findViewById(R.id.rv_pengumuman);
         swipeRefresh = view.findViewById(R.id.swipe_refresh);
 
-        // Inisialisasi Data Dummy
-        prepareData();
-
-        // Setup RecyclerView
         rvPengumuman.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new PengumumanAdapter(listPengumuman);
-        rvPengumuman.setAdapter(adapter);
 
-        // Swipe Refresh Logic
+        loadDataPengumuman();
+
         swipeRefresh.setOnRefreshListener(() -> {
-            // Simulasi refresh data
-            prepareData();
-            adapter.notifyDataSetChanged();
-            swipeRefresh.setRefreshing(false);
+            loadDataPengumuman();
         });
     }
 
-    private void prepareData() {
-        listPengumuman = new ArrayList<>();
-        listPengumuman.add(new Pengumuman(
-                "Pendaftaran Mahasiswa Baru 2024",
-                "25 Oktober 2023",
-                "Penerimaan Mahasiswa Baru Gelombang 1 telah dibuka. Segera daftarkan diri Anda dan raih beasiswa pendidikan.",
-                R.drawable.logo_aplikasi
-        ));
-        listPengumuman.add(new Pengumuman(
-                "Jadwal Ujian Tengah Semester",
-                "20 Oktober 2023",
-                "Diberitahukan kepada seluruh mahasiswa bahwa UTS akan dilaksanakan mulai tanggal 6 November 2023. Harap cek jadwal masing-masing.",
-                R.drawable.logo_aplikasi
-        ));
-        listPengumuman.add(new Pengumuman(
-                "Workshop Mobile Development",
-                "15 Oktober 2023",
-                "Ikuti workshop Android Development menggunakan Java dan Android Studio. Kuota terbatas hanya untuk 50 peserta.",
-                R.drawable.logo_aplikasi
-        ));
-        listPengumuman.add(new Pengumuman(
-                "Seminar Karir & Teknologi",
-                "10 Oktober 2023",
-                "Seminar mengenai perkembangan teknologi AI dan bagaimana mempersiapkan karir di industri teknologi masa depan.",
-                R.drawable.logo_aplikasi
-        ));
-        listPengumuman.add(new Pengumuman(
-                "Lomba Desain UI/UX",
-                "05 Oktober 2023",
-                "Tunjukkan kreativitasmu dalam merancang antarmuka aplikasi yang ramah pengguna. Menangkan hadiah total jutaan rupiah.",
-                R.drawable.logo_aplikasi
-        ));
-        listPengumuman.add(new Pengumuman(
-                "Pengumuman Libur Nasional",
-                "01 Oktober 2023",
-                "Sehubungan dengan hari besar nasional, perkuliahan akan diliburkan. Informasi lengkap jadwal pengganti akan segera diupdate.",
-                R.drawable.logo_aplikasi
-        ));
+    private void loadDataPengumuman() {
+        swipeRefresh.setRefreshing(true);
+
+        RetrofitClient.getInstance().getPengumuman().enqueue(new Callback<List<PengumumanResponse>>() {
+            @Override
+            public void onResponse(Call<List<PengumumanResponse>> call, Response<List<PengumumanResponse>> response) {
+                swipeRefresh.setRefreshing(false);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    listPengumuman = response.body();
+
+                    adapter = new PengumumanAdapter(getContext(), listPengumuman);
+                    rvPengumuman.setAdapter(adapter);
+                } else {
+                    Toast.makeText(getContext(), "Gagal mengambil data dari server", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<PengumumanResponse>> call, Throwable t) {
+                swipeRefresh.setRefreshing(false);
+                Toast.makeText(getContext(), "Error Koneksi: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
     }
 }

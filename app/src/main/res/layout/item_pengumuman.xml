@@ -80,6 +80,7 @@
                 android:background="#EEEEEE" />
 
             <TextView
+                android:id="@+id/btn_selengkapnya"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
