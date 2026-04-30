@@ -1,5 +1,6 @@
 package com.atmaluhur.mobisuts_2411500025;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,6 +34,12 @@ public class PengumumanAdapter extends RecyclerView.Adapter<PengumumanAdapter.Vi
         holder.tvTanggal.setText(item.getTanggal());
         holder.tvDeskripsi.setText(item.getDeskripsi());
         holder.imgPengumuman.setImageResource(item.getGambar());
+
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), DetailPengumumanActivity.class);
+            intent.putExtra("DATA_PENGUMUMAN", item);
+            v.getContext().startActivity(intent);
+        });
     }
 
     @Override

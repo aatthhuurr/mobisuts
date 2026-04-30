@@ -1,6 +1,8 @@
 package com.atmaluhur.mobisuts_2411500025;
 
-public class Pengumuman {
+import java.io.Serializable;
+
+public class Pengumuman implements Serializable {
     private String judul;
     private String tanggal;
     private String deskripsi;
